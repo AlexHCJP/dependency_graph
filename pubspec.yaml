@@ -5,7 +5,6 @@ version: 0.1.0
 repository: https://github.com/AlexHCJP/dependency_graph
 homepage: https://github.com/AlexHCJP/dependency_graph
 issue_tracker: https://github.com/AlexHCJP/dependency_graph/issues
-resolution: workspace
 topics:
   - dependency-graph
   - visualization
