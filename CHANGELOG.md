@@ -1,4 +1,4 @@
-## Unreleased
+## 0.2.0
 
 - Hide links: a checkbox in the panel switches off the edges of the selected
   package, file or library.

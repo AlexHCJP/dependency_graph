@@ -64,7 +64,7 @@ Or manually in `pubspec.yaml`:
 
 ```yaml
 dev_dependencies:
-  dependency_graph: ^0.1.0
+  dependency_graph: ^0.2.0
 ```
 
 ### Globally
