@@ -1,10 +1,9 @@
 /// The page `render` fills: `/*DATA*/null` is replaced by the scan.
 ///
-/// Three views, each its own address so the browser's back works:
+/// Two views, each its own address so the browser's back works:
 /// `#packages` — one node per package; `#package/<name>` — that package's
-/// files boxed by folder, with each package it touches as one node;
-/// `#files` — every file, boxed by package and folder. The "external
-/// libraries" switch adds the pub packages the code imports to the first two.
+/// files boxed by folder, with each package it touches as one node. The
+/// "external libraries" switch adds the pub packages the code imports.
 const htmlTemplate = r'''<!doctype html>
 <html lang="en">
 <head>
@@ -76,7 +75,6 @@ const htmlTemplate = r'''<!doctype html>
 <header>
   <h1>Dependency graph</h1>
   <button data-go="#packages">Packages</button>
-  <button data-go="#files">All files</button>
   <span id="where"></span>
   <label><input type="checkbox" id="foreign" checked> neighbour packages</label>
   <label><input type="checkbox" id="ext"> external libraries</label>
@@ -204,6 +202,7 @@ const cy = cytoscape({
     { selector: 'node.focus', style: { 'border-width': 3, 'border-color': css('--hi') } },
     { selector: 'edge.outgoing', style: { 'line-color': css('--hi'), 'target-arrow-color': css('--hi'), 'opacity': 1, 'z-index': 9 } },
     { selector: 'edge.incoming', style: { 'line-color': css('--in'), 'target-arrow-color': css('--in'), 'opacity': 1, 'z-index': 9 } },
+    { selector: 'edge.hidden', style: { 'display': 'none' } },
   ],
 });
 
@@ -308,10 +307,6 @@ function packageView(name) {
   return els;
 }
 
-function filesView() {
-  return boxed(lines.keys(), []).concat(fileEdges(new Set(lines.keys())));
-}
-
 // A layout is the slow part, so each view keeps where its nodes were when it
 // was left: going back to a graph puts every node where it was.
 const positions = new Map();
@@ -351,7 +346,7 @@ function startPhysics() {
     const { x, y } = n.position();
     simNodes.set(n.id(), { id: n.id(), x, y, r: n.width() / 2 + 4 });
   });
-  const links = cy.edges().map(e => ({ source: e.source().id(), target: e.target().id() }))
+  const links = cy.edges().not('.hidden').map(e => ({ source: e.source().id(), target: e.target().id() }))
     .filter(l => simNodes.has(l.source) && simNodes.has(l.target));
   sim = d3.forceSimulation([...simNodes.values()])
     .alpha(0)
@@ -431,12 +426,33 @@ function layout(key, done) {
 const info = document.getElementById('info');
 const li = (id, text) => `<li data-id="${id}">${text}</li>`;
 
+// Dependencies whose links are switched off, in every view: a package
+// everything imports otherwise ties each node to it.
+const hidden = new Set();
+const hideBox = id => `<label><input type="checkbox" data-hide="${id}"${hidden.has(id) ? ' checked' : ''}> hide links</label>`;
+
+function applyHidden() {
+  cy.batch(() => {
+    cy.edges().removeClass('hidden');
+    for (const id of hidden) { const n = nodeOf(id); n.union(n.descendants()).connectedEdges().addClass('hidden'); }
+  });
+}
+
+info.addEventListener('change', e => {
+  const id = e.target.dataset.hide;
+  if (id === undefined) return;
+  if (e.target.checked) hidden.add(id); else hidden.delete(id);
+  applyHidden();
+  if (sim) startPhysics();
+});
+
 function showFile(id) {
   const outs = [...new Set(out.get(id).map(e => e.to))].sort();
   const ins = [...new Set(inn.get(id).map(e => e.from))].sort();
   const libs = [...new Set(extOut.get(id))].sort();
   info.innerHTML = `<h2>${id}</h2>
     <div class="n">${lines.get(id)} lines · <a href="#package/${pkgOf(id)}">${pkgOf(id)}</a></div>
+    ${hideBox(id)}
     <h3 style="color:${css('--hi')}">Imports (${outs.length})</h3>
     <ul>${outs.map(t => li(t, t)).join('')}</ul>
     <h3 style="color:${css('--in')}">Imported by (${ins.length})</h3>
@@ -449,6 +465,7 @@ function showExternal(lib) {
   const x = external.get(lib), users = extUsers(lib);
   info.innerHTML = `<h2>${lib}</h2>
     <div class="n">${x.version} · ${x.source}</div>
+    ${hideBox(lib)}
     <h3 style="color:${css('--in')}">Imported by (${users.length})</h3>
     <ul>${users.map(([n, c]) => li(n, `${n} <span class="n">${c}</span>`)).join('')}</ul>
     ${users.length ? '' : '<p class="n">No workspace code imports it: it came in as a dependency of another library.</p>'}`;
@@ -458,6 +475,7 @@ function showPackage(name) {
   const p = packages.get(name), outs = pkgOut(name), ins = pkgIn(name);
   info.innerHTML = `<h2>${name}</h2>
     <div class="n">${p.dir} · ${p.files} files</div>
+    ${hideBox(name)}
     <p><a href="#package/${name}">Open the package graph →</a></p>
     <h3 style="color:${css('--hi')}">Depends on (${outs.length})</h3>
     <ul>${outs.map(([n, c]) => li(n, `${n} <span class="n">${c}</span>`)).join('')}</ul>
@@ -545,10 +563,10 @@ function open(id) {
 let pending = null;
 
 function route() {
-  const view = location.hash || '#packages';
+  const view = location.hash.startsWith('#package/') ? location.hash : '#packages';
   const name = view.startsWith('#package/') ? decodeURIComponent(view.slice(9)) : null;
   const key = (name ? view + (document.getElementById('foreign').checked ? '+' : '') : view)
-    + (extOn() && view !== '#files' ? '+x' : '');
+    + (extOn() ? '+x' : '');
   const where = document.getElementById('where');
   document.querySelectorAll('[data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === view));
   where.textContent = 'laying out…';
@@ -557,10 +575,11 @@ function route() {
   shown = null;
   // Let the browser paint the message before the layout takes the thread.
   setTimeout(() => {
-    const els = name ? packageView(name) : view === '#files' ? filesView() : packagesView();
+    const els = name ? packageView(name) : packagesView();
     const edges = els.filter(e => e.group === 'edges').length;
     if (edges > FAST_EDGES) for (const e of els) if (e.group === 'edges') e.classes = (e.classes || '') + ' fast';
     cy.batch(() => { cy.elements().remove(); cy.add(els); });
+    applyHidden();
     layout(key, () => {
       shown = key;
       cy.fit(undefined, 30);

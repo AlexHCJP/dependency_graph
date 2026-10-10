@@ -1,3 +1,9 @@
+## Unreleased
+
+- Hide links: a checkbox in the panel switches off the edges of the selected
+  package, file or library.
+- Removed the all-files graph.
+
 ## 0.1.0
 
 - First release: package, package-detail and all-files graphs of `import`,

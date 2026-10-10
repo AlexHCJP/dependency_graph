@@ -46,7 +46,6 @@ A Dart command-line tool that shows who imports whom in a Dart package or a [pub
 
 - 📦 Packages graph — one node per package, edges weighted by the number of directives
 - 🔍 Package graph — its files boxed by folder, every neighbour package as one node
-- 🗂️ All files graph — every file, boxed by package and folder
 - 🌐 External libraries — every library `pubspec.lock` downloaded, with its version and who imports it
 - 🔴 Packages that depend on each other are marked red
 - 🧲 Live physics, Obsidian-style — drag a node and its neighbours follow
@@ -118,7 +117,7 @@ Double-click a package to open it: its files boxed by folder, and each package i
 - ⬅️ Who uses it
 - 🌐 Which external libraries it imports
 
-Click any node to highlight its edges: **outgoing** in orange, **incoming** in blue. Dashed edges are `export`, dotted are `part`.
+Click any node to highlight its edges: **outgoing** in orange, **incoming** in blue. Dashed edges are `export`, dotted are `part`. Tick **hide links** in its panel to switch its edges off in every view — handy for a package everything imports.
 
 ### Forces
 
