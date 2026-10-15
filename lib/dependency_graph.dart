@@ -21,6 +21,32 @@ List<String> workspaceMembers(String rootPubspec) {
 String? packageName(String pubspec) =>
     RegExp(r'^name:\s*(\S+)', multiLine: true).firstMatch(pubspec)?[1];
 
+/// The `dependency_graph:` section of the root pubspec — `output`,
+/// `physics_nodes`, `forces: {center, repel, …}` — as a map; numbers as
+/// numbers, one level of nesting.
+Map<String, Object> settings(String rootPubspec) {
+  final section = RegExp(
+    r'^dependency_graph:[ \t]*\n((?:[ \t]+.*\n?|[ \t]*#.*\n?|[ \t]*\n)+)',
+    multiLine: true,
+  ).firstMatch(rootPubspec);
+  if (section == null) return const {};
+  final out = <String, Object>{};
+  var nested = out;
+  for (final m in RegExp(
+    r'^([ \t]+)([\w-]+):[ \t]*([^#\n]*?)[ \t]*(?:#.*)?$',
+    multiLine: true,
+  ).allMatches(section[1]!)) {
+    final value = m[3]!.replaceAll(RegExp('^["\x27]|["\x27]\$'), '');
+    if (m[1]!.length <= 2) nested = out;
+    if (value.isEmpty) {
+      nested = out[m[2]!] = <String, Object>{};
+    } else {
+      nested[m[2]!] = num.tryParse(value) ?? value;
+    }
+  }
+  return out;
+}
+
 /// Every `import`, `export` and `part` of a Dart file, as (kind, uri). A
 /// conditional import counts by its default uri; `part of` is not a
 /// dependency of its own — the library's `part` already is the edge.
@@ -121,9 +147,12 @@ Map<String, Object> scan(Directory root) {
   };
 }
 
-/// The page: the template with the scan inlined, so it opens from disk.
-String render(Map<String, Object> graph) => htmlTemplate.replaceFirst(
-  '/*DATA*/null',
-  // `</` would end the script tag early.
-  jsonEncode(graph).replaceAll('</', r'<\/'),
-);
+/// The page: the template with the scan and the pubspec [settings] inlined,
+/// so it opens from disk.
+String render(
+  Map<String, Object> graph, {
+  Map<String, Object> settings = const {},
+}) => htmlTemplate
+    .replaceFirst('/*SETTINGS*/{}', jsonEncode(settings))
+    // `</` would end the script tag early.
+    .replaceFirst('/*DATA*/null', jsonEncode(graph).replaceAll('</', r'<\/'));

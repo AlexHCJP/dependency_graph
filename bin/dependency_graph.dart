@@ -8,7 +8,9 @@ Usage: dependency_graph [root] [out.html]
 Writes an HTML page of who imports whom in a Dart package or pub workspace.
 
   root       the package or workspace root (default: .)
-  out.html   where to write the page (default: <root>/build/dependency_graph/index.html)''';
+  out.html   where to write the page (default: <root>/build/dependency_graph/index.html)
+
+Defaults live in the root pubspec.yaml under `dependency_graph:` — see README.''';
 
 void main(List<String> args) {
   if (args.contains('-h') || args.contains('--help')) {
@@ -21,15 +23,16 @@ void main(List<String> args) {
     exitCode = 64;
     return;
   }
+  final config = settings(File('${root.path}/pubspec.yaml').readAsStringSync());
   final out = File(
     args.length > 1
         ? args[1]
-        : '${root.path}/build/dependency_graph/index.html',
+        : '${root.path}/${config['output'] ?? 'build/dependency_graph/index.html'}',
   );
   final graph = scan(root);
   out
     ..createSync(recursive: true)
-    ..writeAsStringSync(render(graph));
+    ..writeAsStringSync(render(graph, settings: config));
   final packages = (graph['packages'] as List).length;
   final files = (graph['files'] as List).length;
   final edges = (graph['edges'] as List).length;

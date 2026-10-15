@@ -11,6 +11,14 @@ void main() {
         'apps/a,packages/b',
   );
   assert(packageName('name: feature_x\nversion: 1') == 'feature_x');
+  assert(settings('name: x\n').isEmpty);
+  final cfg = settings(
+    'name: x\ndependency_graph:\n  output: "out/g.html" # here\n'
+    '  physics_nodes: 300\n  forces:\n    repel: 1.5\n    center: 0\n\nother: 1\n',
+  );
+  assert(cfg['output'] == 'out/g.html', '$cfg');
+  assert(cfg['physics_nodes'] == 300, '$cfg');
+  assert((cfg['forces'] as Map)['repel'] == 1.5 && cfg.length == 3, '$cfg');
 
   final found = directives('''
 import 'dart:io';
@@ -86,6 +94,14 @@ sdks:
     final uses = graph['uses'] as List;
     assert(uses.length == 1 && uses.first['to'] == 'http', '$uses');
     assert(render(graph).contains('"a/main.dart"'));
+    assert(
+      render(
+        graph,
+        settings: {
+          'forces': {'repel': 2},
+        },
+      ).contains('const SETTINGS = {"forces":{"repel":2}};'),
+    );
   } finally {
     root.deleteSync(recursive: true);
   }

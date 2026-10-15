@@ -325,8 +325,9 @@ function savePositions() {
 // pull to the middle. They start from the laid-out positions, cool down, and
 // warm up again while a node is dragged, so its neighbours follow. Above this
 // many nodes a view keeps still unless the box is ticked again there.
-const PHYSICS_NODES = 600;
-const FORCES = { center: 0.02, repel: 1, link: 0.15, distance: 1, damping: 0.5 };
+const SETTINGS = /*SETTINGS*/{};
+const PHYSICS_NODES = SETTINGS.physics_nodes ?? 600;
+const FORCES = { center: 0.02, repel: 1, link: 0.15, distance: 1, damping: 0.5, ...SETTINGS.forces };
 const forces = { ...FORCES };
 try { Object.assign(forces, JSON.parse(localStorage.getItem('dependency_graph.forces'))); } catch {}
 let sim = null, simNodes = new Map();

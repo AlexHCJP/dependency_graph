@@ -64,7 +64,7 @@ Or manually in `pubspec.yaml`:
 
 ```yaml
 dev_dependencies:
-  dependency_graph: ^0.2.0
+  dependency_graph: ^0.3.0
 ```
 
 ### Globally
@@ -73,16 +73,34 @@ dev_dependencies:
 dart pub global activate dependency_graph
 ```
 
-Then run as:
+## 📖 Usage
+
+From a project that has it as a dev dependency:
+
+```shell
+dart run dependency_graph [root] [out.html]
+```
+
+Installed globally, from anywhere:
 
 ```shell
 dependency_graph [root] [out.html]
 ```
 
-## 📖 Usage
+Both take the same arguments and write the same page. Both arguments are optional:
 
-```bash
-dart run dependency_graph [root] [out.html]
+- `root` is the folder of the project to scan, the one with `pubspec.yaml`: a single package or a workspace root.
+- `out.html` is where to write the page.
+
+```shell
+# the current folder, page in ./build/dependency_graph/index.html
+dart run dependency_graph
+
+# another project, page in its build/dependency_graph/index.html
+dart run dependency_graph ../my_app
+
+# another project, page in graph.html in the current folder
+dart run dependency_graph ../my_app graph.html
 ```
 
 ### Arguments
@@ -94,6 +112,34 @@ dart run dependency_graph [root] [out.html]
 | `-h, --help` | Print usage information | |
 
 Run `dart pub get` first, so `pubspec.lock` lists the external libraries. The page loads Cytoscape.js and d3 from a CDN, so it needs a network connection to open.
+
+### Configuration
+
+Defaults can be changed in the root `pubspec.yaml` (the workspace root, or the package itself) under a `dependency_graph:` key. Every key is optional; the values below are the built-in defaults:
+
+```yaml
+dependency_graph:
+  output: build/dependency_graph/index.html  # relative to root; the out.html argument wins
+  physics_nodes: 600                         # views above this many nodes keep still
+  forces:                                    # the Reset baseline of the Forces panel
+    center: 0.02
+    repel: 1
+    link: 0.15
+    distance: 1
+    damping: 0.5
+```
+
+| Key | Description | Default |
+|-----|-------------|---------|
+| `output` | Where to write the page, relative to `root` | `build/dependency_graph/index.html` |
+| `physics_nodes` | Views with more nodes than this keep still until **physics** is ticked | `600` |
+| `forces.center` | Pull towards the middle | `0.02` |
+| `forces.repel` | How hard nodes push each other away | `1` |
+| `forces.link` | Stiffness of the edges | `0.15` |
+| `forces.distance` | Length of the edges | `1` |
+| `forces.damping` | How fast the motion settles | `0.5` |
+
+Forces changed in the browser are kept in `localStorage` and win over the pubspec; **Reset** goes back to the pubspec values.
 
 ## 🎯 Views
 
@@ -121,7 +167,7 @@ Click any node to highlight its edges: **outgoing** in orange, **incoming** in b
 
 ### Forces
 
-Open the **Forces** panel to tune the physics. The settings are kept in the browser; **Reset** brings back the defaults.
+Open the **Forces** panel to tune the physics. The settings are kept in the browser; **Reset** brings back the defaults from `pubspec.yaml` (see [Configuration](#configuration)).
 
 ![Forces](screenshots/forces.png)
 
