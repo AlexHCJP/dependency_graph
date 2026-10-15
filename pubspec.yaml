@@ -1,6 +1,6 @@
 name: dependency_graph
 description: "Who imports whom in a Dart package or pub workspace, and which pub libraries it pulls in: one interactive HTML page of graphs."
-version: 0.3.0
+version: 0.4.0
 
 repository: https://github.com/AlexHCJP/dependency_graph
 homepage: https://github.com/AlexHCJP/dependency_graph

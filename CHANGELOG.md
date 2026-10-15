@@ -1,3 +1,9 @@
+## 0.4.0
+
+- README: the configuration table shows the min and max of every setting.
+- README: what `root` and `out.html` are, with examples; installing and
+  running are now separate sections.
+
 ## 0.3.0
 
 - Configuration in the root `pubspec.yaml` under `dependency_graph:`: `output`,
