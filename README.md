@@ -129,15 +129,17 @@ dependency_graph:
     damping: 0.5
 ```
 
-| Key | Description | Default |
-|-----|-------------|---------|
-| `output` | Where to write the page, relative to `root` | `build/dependency_graph/index.html` |
-| `physics_nodes` | Views with more nodes than this keep still until **physics** is ticked | `600` |
-| `forces.center` | Pull towards the middle | `0.02` |
-| `forces.repel` | How hard nodes push each other away | `1` |
-| `forces.link` | Stiffness of the edges | `0.15` |
-| `forces.distance` | Length of the edges | `1` |
-| `forces.damping` | How fast the motion settles | `0.5` |
+| Key | Description | Default | Min | Max |
+|-----|-------------|---------|-----|-----|
+| `output` | Where to write the page, relative to `root` | `build/dependency_graph/index.html` | — | — |
+| `physics_nodes` | Views with more nodes than this keep still until **physics** is ticked | `600` | `0` | — |
+| `forces.center` | Pull towards the middle | `0.02` | `0` | `0.2` |
+| `forces.repel` | How hard nodes push each other away | `1` | `0` | `3` |
+| `forces.link` | Stiffness of the edges | `0.15` | `0` | `1` |
+| `forces.distance` | Length of the edges | `1` | `0.2` | `3` |
+| `forces.damping` | How fast the motion settles | `0.5` | `0.05` | `0.9` |
+
+The `forces` ranges are the ranges of the **Forces** sliders.
 
 Forces changed in the browser are kept in `localStorage` and win over the pubspec; **Reset** goes back to the pubspec values.
 
